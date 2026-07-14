@@ -14,16 +14,35 @@ def chat(prompt, max_tokens=100):
     ids = model.encode(prompt).tolist()[0]
     output = ""
     
-    for _ in range(max_tokens):
+    for i in range(max_tokens):
         logits = model.get_logits_from_input_ids(ids)
+        # next_id = int(np.argmax(logits))
+        # print( ids)
+        # print(logits)
+        print(i)
+
         next_id = int(np.argmax(logits))
-        
+        if output == "":
+            for token_id, logit in enumerate(logits):
+                # logits = model.get_logits_from_input_ids(ids)
+                # print(f"next_id = {next_id}")
+                # print(np.argmax(logits))
+                next_id = int(np.argmax(logits))
+                token = model.decode([next_id])
+                if token.startswith('{'):
+                    print(token)
+                    output += token
+                    break
+                logits[next_id] = float('-inf')
+
+
         token = model.decode([next_id])
-        
+        # print("token bera")
         if token in ["<|im_end|>", "</s>", "<|endoftext|>"]:
             break
-            
-        output += token
+        if output.startswith('{'):
+            print(token)
+            output += token
         ids.append(next_id)
         
         if len(output) > 200:
@@ -40,6 +59,5 @@ with open("data/input/functions_definition.json") as f:
     func = json.load(f)
     # print(func)
 
-print(chat(
-    f"{prompt[2]['prompt']} and {func}, give me just a json output with prompt, "
-      "and chose the name of function adapted from the list i give, parameters"))
+print(chat(f"{prompt[2]['prompt']} and {func}, give me just a json output with prompt, "
+            "and chose the name of function adapted from the list i give, parameters"))
