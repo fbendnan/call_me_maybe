@@ -19,8 +19,8 @@ def chat(prompt, max_tokens=100):
         # next_id = int(np.argmax(logits))
         # print( ids)
         # print(logits)
-        print(i)
-
+        # print(i)
+        # print(len(logits))
         next_id = int(np.argmax(logits))
         if output == "":
             for token_id, logit in enumerate(logits):
@@ -30,7 +30,7 @@ def chat(prompt, max_tokens=100):
                 next_id = int(np.argmax(logits))
                 token = model.decode([next_id])
                 if token.startswith('{'):
-                    print(token)
+                    # print(token)
                     output += token
                     break
                 logits[next_id] = float('-inf')
@@ -41,7 +41,7 @@ def chat(prompt, max_tokens=100):
         if token in ["<|im_end|>", "</s>", "<|endoftext|>"]:
             break
         if output.startswith('{'):
-            print(token)
+            # print(token)
             output += token
         ids.append(next_id)
         
@@ -59,5 +59,6 @@ with open("data/input/functions_definition.json") as f:
     func = json.load(f)
     # print(func)
 
-print(chat(f"{prompt[2]['prompt']} and {func}, give me just a json output with prompt, "
-            "and chose the name of function adapted from the list i give, parameters"))
+print(chat(f"prompt : {prompt[7]['prompt']}, functions: {func},"
+            "based on the prompt chose the right function to it and give me just a JSON "
+            "output (no extra text) with informations like prompt, name (of function used), parameters"))
