@@ -13,38 +13,23 @@ model = Small_LLM_Model()
 def chat(prompt, max_tokens=100):
     ids = model.encode(prompt).tolist()[0]
     output = ""
+    open_brace_id = model.encode("{").tolist()[0][0]
+    quote_id = model.encode('"').tolist()[0][0]
     
-
-    
-    for i in range(max_tokens):
+    for _ in range(max_tokens):
         logits = model.get_logits_from_input_ids(ids)
-        
-        next_id = int(np.argmax(logits))
-
-        if output != "" and output.startswith('{') and len(output) == 1:
-            for token_id, logit in enumerate(logits):
-                next_id = int(np.argmax(logits))
-                token = model.decode([next_id])
-                if token.startswith('"') or token.strip() == '"':
-                    # print(token)
-                    output += token
-                    break
-                logits[next_id] = float('-inf')
 
         if output == "":
-            for token_id, logit in enumerate(logits):
-                next_id = int(np.argmax(logits))
-                token = model.decode([next_id])
-                if token == '{':
-                    # print(token)
-                    output += token
-                    break
-                logits[next_id] = float('-inf')
-        
-            
+            for token_id in range(len(logits)):
+                if token_id != open_brace_id:
+                    logits[token_id] = float('-inf')
 
+        elif output == "{":
+            for token_id in range(len(logits)):
+                    if token_id != quote_id:
+                        logits[token_id] = float('-inf')
 
-
+        next_id = int(np.argmax(logits))
         token = model.decode([next_id])
         # print("token bera")
         if token in ["<|im_end|>", "</s>", "<|endoftext|>"]:
@@ -52,9 +37,6 @@ def chat(prompt, max_tokens=100):
             # print(token)
         output += token
         ids.append(next_id)
-        
-        if len(output) > 200:
-            break
     
     return output
 
