@@ -85,8 +85,6 @@ Return ONLY JSON with prompt, name, and parameters.'''
                     token = model.decode([next_id])
                     output += token
                     ids.append(next_id)
-                pos += 1
-            
             elif part_token == "fun_name":
                 func_names = [f['name'] for f in functions]
                 
@@ -115,26 +113,21 @@ Return ONLY JSON with prompt, name, and parameters.'''
                     if gen_name in func_names:
                         break
                 
-                # if gen_name not in func_names:
-                #     for name in func_names:
-                #         if name.startswith(gen_name):
-                #             remaining = name[len(gen_name):]
-                #             if remaining:
-                #                 for tid in model.encode(remaining).tolist()[0]:
-                #                     logits = model.get_logits_from_input_ids(ids)
-                #                     for token_id in range(len(logits)):
-                #                         if token_id != tid:
-                #                             logits[token_id] = float('-inf')
-                #                     next_id = int(np.argmax(logits))
-                #                     token = model.decode([next_id])
-                #                     output += token
-                #                     ids.append(next_id)
-                #             break
+                if gen_name not in func_names:
+                    ...
                 
-                pos += 1
+
             
             elif part_token == "param_values":
-                pos += 1
+                for _ in range(5):
+                    logits = model.get_logits_from_input_ids(ids)
+                    next_id = int(np.argmax(logits))
+                    token = model.decode([next_id])
+                    if token == '}':
+                        break
+                    output += token
+                    ids.append(next_id)
+            pos += 1
     
     return output
 
@@ -147,4 +140,12 @@ with open("data/input/functions_definition.json") as f:
     func = json.load(f)
     # print(func)
 
-print(chat(prompt[8]['prompt'], func))
+result = []
+for p in prompt:
+    print("yyy")
+    res = chat(p['prompt'], func)
+    result.append(res)
+
+with open("data/output.json", "w") as file:
+    for res in result:
+        file.write(res)
