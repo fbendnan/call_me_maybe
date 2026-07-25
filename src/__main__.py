@@ -18,6 +18,7 @@ Return ONLY JSON with prompt, name, and parameters.'''
     ids = model.encode(prompt).tolist()[0]
     output = ""
     pos = 0
+    chosen_fun = None
     
     skeleton = [
         ("forced", '{'),
@@ -59,7 +60,7 @@ Return ONLY JSON with prompt, name, and parameters.'''
             
         logits = model.get_logits_from_input_ids(ids)
         part_type, part_token = skeleton[pos]
-        
+
         if part_type == 'forced':
             tok_ids = model.encode(part_token).tolist()[0]
             for tok_id in tok_ids:
@@ -72,7 +73,7 @@ Return ONLY JSON with prompt, name, and parameters.'''
                 output += token
                 ids.append(next_id)
             pos += 1
-        
+
         elif part_type == 'not_forced':
             if part_token == "prompt_value":
                 prompt_tokens = model.encode(user_prompt).tolist()[0]
@@ -90,7 +91,8 @@ Return ONLY JSON with prompt, name, and parameters.'''
                 
                 allowed_tokens = set()
                 for name in func_names:
-                    for tid in model.encode(name).tolist()[0]:
+                    func_name_tokens = model.encode(name).tolist()[0]
+                    for tid in func_name_tokens:
                         allowed_tokens.add(tid)
                 
                 gen_name = ""
@@ -111,24 +113,52 @@ Return ONLY JSON with prompt, name, and parameters.'''
                     ids.append(next_id)
                     
                     if gen_name in func_names:
+                        chosen_fun = next(func for func in functions if func['name'] == gen_name)
                         break
-                
-                if gen_name not in func_names:
-                    ...
-                
 
-            
+                print(gen_name)
             elif part_token == "param_values":
-                for _ in range(5):
-                    logits = model.get_logits_from_input_ids(ids)
-                    next_id = int(np.argmax(logits))
-                    token = model.decode([next_id])
-                    if token == '}':
-                        break
-                    output += token
-                    ids.append(next_id)
+                if chosen_fun is None:
+                    chosen_fun = functions[0]
+                params = chosen_fun['parameters']
+                param_names = list(params.keys())
+
+                for index, param_name in enumerate(param_names):
+                    param_name = f'"{param_name}": '
+                    param_name_tokens = model.encode(param_name).tolist()[0]
+                    for tok_id in param_name_tokens:
+                        logits = model.get_logits_from_input_ids(ids)
+                        for token_id in range(len(logits)):
+                            if tok_id != token_id:
+                                logits[token_id] = float('-inf')
+                        next_id = int(np.argmax(logits))
+                        token = model.decode([next_id])
+                        output += token
+                        ids.append(next_id)
+
+                    value = ""
+                    for _ in range(15):
+                        logits = model.get_logits_from_input_ids(ids)
+                        next_id = int(np.argmax(logits))
+                        token = model.decode([next_id])
+                        if '}' in token or ',' in token:
+                            break
+                        value += token
+                        output += token
+                        ids.append(next_id)
+
+                    if index < len(param_names) - 1:
+                        virg_token = model.encode(', ').tolist()[0]
+                        for tok_id in virg_token:
+                            logits = model.get_logits_from_input_ids(ids)
+                            for token_id in range(len(logits)):
+                                if token_id != tok_id:
+                                    logits[token_id] = float('-inf')
+                            next_id = int(np.argmax(logits))
+                            token = model.decode([next_id])
+                            output+= token
+                            ids.append(next_id)
             pos += 1
-    
     return output
 
 
@@ -142,8 +172,8 @@ with open("data/input/functions_definition.json") as f:
 
 result = []
 for p in prompt:
-    print("yyy")
     res = chat(p['prompt'], func)
+    print(res)
     result.append(res)
 
 with open("data/output.json", "w") as file:
