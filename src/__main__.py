@@ -1,29 +1,57 @@
-# from llm_sdk import Small_LLM_Model
-
-
-# llm = Small_LLM_Model()
-# print(llm.encode("hello bro"))
+import argparse
 import json
-from src.llm_generator import llm_generator
+import sys
+import os
+from src.models import validate_output
+from src.generator import LLMGenerator
+from src.validator import extract_json
 
+def main():
+    parser = argparse.ArgumentParser(description="Function calling with constrained decoding.")
+    parser.add_argument('--functions_definition', default='data/input/functions_definition.json',
+                        help='Path to function definitions JSON file')
+    parser.add_argument('--input', default='data/input/function_calling_tests.json',
+                        help='Path to input prompts JSON file')
+    parser.add_argument('--output', default='data/output/function_calls.json',
+                        help='Path to output JSON file')
+    args = parser.parse_args()
 
-with open("data/input/function_calling_tests.json") as f:
-    prompt = json.load(f)
-    # print(prompt[0]['prompt'])
+    try:
+        with open(args.functions_definition, 'r') as f:
+            functions = json.load(f)
+        with open(args.input, 'r') as f:
+            prompts = json.load(f)
+    except Exception as e:
+        print(f"Error reading input files: {e}", file=sys.stderr)
+        sys.exit(1)
 
-with open("data/input/functions_definition.json") as f:
-    func = json.load(f)
-    # print(func)
+    results = []
+    for item in prompts:
+        user_prompt = item.get('prompt', '')
+        generator = LLMGenerator(user_prompt, functions)
+        raw = generator.generate()
+        print(raw)
 
-ll = llm_generator(prompt[9]['prompt'], func)
-print(ll.chat())
+        json_str = extract_json(raw)
+        if json_str is None:
+            results.append({"prompt": user_prompt, "error": "No valid JSON found"})
+            continue
 
-# result = []
-# for p in prompt:
-#     print("yyy")
-#     res = chat(p['prompt'], func)
-#     result.append(res)
+        try:
+            data = json.loads(json_str)
+        except json.JSONDecodeError:
+            results.append({"prompt": user_prompt, "error": "Invalid JSON", "raw": raw})
+            continue
 
-# with open("data/output.json", "w") as file:
-#     for res in result:
-#         file.write(res)
+        ok, msg = validate_output(data)
+        if not ok:
+            results.append({"prompt": user_prompt, "error": msg, "raw": data})
+        else:
+            results.append(data)
+
+    os.makedirs(os.path.dirname(args.output), exist_ok=True)
+    with open(args.output, 'w') as f:
+        json.dump(results, f, indent=2)
+
+if __name__ == "__main__":
+    main()
