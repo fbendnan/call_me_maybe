@@ -2,9 +2,7 @@ import argparse
 import json
 import sys
 import os
-from src.models import validate_output
 from src.generator import LLMGenerator
-from src.validator import extract_json
 
 def main():
     parser = argparse.ArgumentParser(description="Function calling with constrained decoding.")
@@ -31,10 +29,12 @@ def main():
         generator = LLMGenerator(user_prompt, functions)
         res = generator.generate()
         print(res)
+        results.append(res)
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     with open(args.output, 'w') as f:
-        json.dump(results, f, indent=2)
+        for res in results:
+            f.write(res)
 
 if __name__ == "__main__":
     main()

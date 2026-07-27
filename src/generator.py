@@ -27,9 +27,9 @@ class LLMGenerator:
         for _ in range(20):
             logits = model.get_logits_from_input_ids(self.ids)
             next_id = int(np.argmax(logits))
-            if next_id == comma_id or next_id == brace_id:
-                break
             token = model.decode([next_id])
+            if ',' in token or '}' in token:
+                break
             self.output += token
             self.ids.append(next_id)
 
