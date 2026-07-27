@@ -29,25 +29,8 @@ def main():
     for item in prompts:
         user_prompt = item.get('prompt', '')
         generator = LLMGenerator(user_prompt, functions)
-        raw = generator.generate()
-        print(raw)
-
-        json_str = extract_json(raw)
-        if json_str is None:
-            results.append({"prompt": user_prompt, "error": "No valid JSON found"})
-            continue
-
-        try:
-            data = json.loads(json_str)
-        except json.JSONDecodeError:
-            results.append({"prompt": user_prompt, "error": "Invalid JSON", "raw": raw})
-            continue
-
-        ok, msg = validate_output(data)
-        if not ok:
-            results.append({"prompt": user_prompt, "error": msg, "raw": data})
-        else:
-            results.append(data)
+        res = generator.generate()
+        print(res)
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     with open(args.output, 'w') as f:
