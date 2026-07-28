@@ -24,17 +24,33 @@ def main():
         sys.exit(1)
 
     results = []
+    generator = LLMGenerator(functions)
     for item in prompts:
-        user_prompt = item.get('prompt', '')
-        generator = LLMGenerator(user_prompt, functions)
-        res = generator.generate()
-        print(res)
-        results.append(res)
+        if isinstance(item, str):
+            user_prompt = item
+        elif isinstance(item, dict) and "prompt" in item:
+            user_prompt = item["prompt"]
+        else:
+            print(f"Warning: Skipping invalid prompt: {item}", file=sys.stderr)
+            continue
+        
+        try:
+            result = generator.generate(user_prompt)
+            results.append(result)
+            print(f"Generated: {result}")
+        except Exception as e:
+            print(f"Error generating for prompt '{user_prompt}': {e}", file=sys.stderr)
+            results.append({
+                "prompt": user_prompt,
+                "name": "",
+                "parameters": {}
+            })
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     with open(args.output, 'w') as f:
-        for res in results:
-            f.write(res)
+        json.dump(results, f, indent=2)
+
+    print(f"Output written to {args.output}")
 
 if __name__ == "__main__":
     main()
