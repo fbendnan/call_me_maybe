@@ -7,7 +7,7 @@ class LLMGenerator:
         self.functions = functions
         self.max_tokens = max_tokens
         self.chosen_fun = None
-        self.output = ""
+        self.output = []
         self.ids = None
         self.step = 0
         
@@ -38,8 +38,8 @@ class LLMGenerator:
             raise RuntimeError("No valid token found")
         
         token = model.decode([best_id])
-        self.output += token
-        print(self.output)
+        self.output.append(token)
+        # print(self.output)
         self.ids.append(best_id)
         return token, best_id
 
@@ -85,15 +85,18 @@ class LLMGenerator:
     def _generate_string_value(self):
 
         self._force_tokens('"')
-        # Keep generating until we hit a quote
         for _ in range(50):
             logits = model.get_logits_from_input_ids(self.ids)
             next_id = int(np.argmax(logits))
             token = model.decode([next_id])
-            self.output += token
-            self.ids.append(next_id)
-            if next_id == self.quote_id:
+            if '"' in token:
+                self._force_tokens('"')
                 break
+            self.output.append(token)
+            self.ids.append(next_id)
+            
+            # if next_id == self.quote_id:
+            #     break
 
     def _generate_number_value(self):
         """Generate a JSON number using constrained decoding."""
@@ -104,7 +107,7 @@ class LLMGenerator:
             token = model.decode([next_id])
             if ',' in token or '}' in token:
                 break
-            self.output += token
+            self.output.append(token)
             self.ids.append(next_id)
 
     def _generate_value(self, value_type):
@@ -134,7 +137,7 @@ class LLMGenerator:
 
     def generate(self, user_prompt):
         """Generate full JSON response."""
-        self.output = ""
+        self.output = []
         self.chosen_fun = None
         self.step = 0
         
@@ -148,20 +151,20 @@ class LLMGenerator:
         
         self.ids = model.encode(prompt).tolist()[0]
         
-        self._force_tokens('{"prompt": ')
-        self._force_tokens(json.dumps(user_prompt))
-        self._force_tokens(', "name": "')
+        # self._force_tokens('{"prompt": ')
+        # self._force_tokens(json.dumps(user_prompt))
+        self._force_tokens('{"name": "')
         self._generate_function_name()
         self._force_tokens('", "parameters": ')
         self._generate_parameters()
         self._force_tokens('}')
-        
+        final_out = "".join(self.output)
         try:
-            result = json.loads(self.output)
+            result = json.loads(final_out)
             return {
                 "prompt": user_prompt,
                 "name": result["name"],
                 "parameters": result["parameters"]
             }
         except json.JSONDecodeError as e:
-            raise RuntimeError(f"Invalid JSON: {self.output[:200]}...") from e
+            raise RuntimeError(f"Invalid JSON: {final_out[:200]}...") from e

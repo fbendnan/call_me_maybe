@@ -4,6 +4,17 @@ import json
 model = Small_LLM_Model()
 
 _token_cache = {}
+vocab_id_to_token = {}
+
+def vocab_tok_to_id():
+    with open(model.get_path_to_vocab_file()) as f:
+        vocab = json.load(f)
+        return {
+            int(v):k
+            for k, v in vocab.items()
+        }
+
+vocab_id_to_token = vocab_tok_to_id()
 
 def get_tokens(text: str) -> list[int]:
     if text not in _token_cache:

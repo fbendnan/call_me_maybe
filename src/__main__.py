@@ -37,7 +37,7 @@ def main():
         try:
             result = generator.generate(user_prompt)
             results.append(result)
-            print(f"Generated: {result}")
+            # print(f"Generated: {result}")
         except Exception as e:
             print(f"Error generating for prompt '{user_prompt}': {e}", file=sys.stderr)
             results.append({
