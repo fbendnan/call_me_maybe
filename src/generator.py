@@ -46,7 +46,9 @@ class LLMGenerator:
     def _force_tokens(self, text):
         """Force a sequence of tokens."""
         for tid in get_tokens(text):
-            self._generate_token({tid})
+            # self._generate_token({tid})
+            self.ids.append(tid)
+            self.output.append(model.decode([tid]))
 
     def _generate_function_name(self):
         """Generate function name using prefix matching."""
@@ -66,7 +68,9 @@ class LLMGenerator:
                 chosen = self.func_names[possible[0]]
                 full = self.func_tokens[chosen]
                 for tid in full[len(generated):]:
-                    self._generate_token({tid})
+                    # self._generate_token({tid})
+                    self.ids.append(tid)
+                    self.output.append(model.decode([tid]))
                 self.chosen_fun = self.func_map[chosen]
                 return chosen
             
