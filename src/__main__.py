@@ -25,19 +25,13 @@ def main():
 
     results = []
     generator = LLMGenerator(functions)
-    for item in prompts:
-        if isinstance(item, str):
-            user_prompt = item
-        elif isinstance(item, dict) and "prompt" in item:
-            user_prompt = item["prompt"]
-        else:
-            print(f"Warning: Skipping invalid prompt: {item}", file=sys.stderr)
-            continue
-        
+    for item in prompts: 
         try:
+            user_prompt = item["prompt"]
+            if user_prompt == "":
+                raise ValueError('No prompt founded')
             result = generator.generate(user_prompt)
             results.append(result)
-            # print(f"Generated: {result}")
         except Exception as e:
             print(f"Error generating for prompt '{user_prompt}': {e}", file=sys.stderr)
             results.append({

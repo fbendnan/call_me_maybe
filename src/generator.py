@@ -39,14 +39,12 @@ class LLMGenerator:
         
         token = model.decode([best_id])
         self.output.append(token)
-        # print(self.output)
         self.ids.append(best_id)
         return token, best_id
 
     def _force_tokens(self, text):
         """Force a sequence of tokens."""
         for tid in get_tokens(text):
-            # self._generate_token({tid})
             self.ids.append(tid)
             self.output.append(model.decode([tid]))
 
@@ -68,7 +66,6 @@ class LLMGenerator:
                 chosen = self.func_names[possible[0]]
                 full = self.func_tokens[chosen]
                 for tid in full[len(generated):]:
-                    # self._generate_token({tid})
                     self.ids.append(tid)
                     self.output.append(model.decode([tid]))
                 self.chosen_fun = self.func_map[chosen]
@@ -98,9 +95,7 @@ class LLMGenerator:
                 break
             self.output.append(token)
             self.ids.append(next_id)
-            
-            # if next_id == self.quote_id:
-            #     break
+
 
     def _generate_number_value(self):
         """Generate a JSON number using constrained decoding."""
@@ -118,7 +113,7 @@ class LLMGenerator:
         """Generate a value based on type."""
         if value_type == "string":
             self._generate_string_value()
-        else:
+        elif value_type == "number":
             self._generate_number_value()
 
     def _generate_parameters(self):
@@ -155,9 +150,9 @@ class LLMGenerator:
         
         self.ids = model.encode(prompt).tolist()[0]
         
-        # self._force_tokens('{"prompt": ')
-        # self._force_tokens(json.dumps(user_prompt))
-        self._force_tokens('{"name": "')
+        self._force_tokens('{"prompt": ')
+        self._force_tokens(json.dumps(user_prompt))
+        self._force_tokens(',"name": "')
         self._generate_function_name()
         self._force_tokens('", "parameters": ')
         self._generate_parameters()
@@ -166,7 +161,7 @@ class LLMGenerator:
         try:
             result = json.loads(final_out)
             return {
-                "prompt": user_prompt,
+                "prompt": result['prompt'],
                 "name": result["name"],
                 "parameters": result["parameters"]
             }
