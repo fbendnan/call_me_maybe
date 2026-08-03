@@ -109,7 +109,7 @@ class LLMGenerator:
             #     continue
             print("outside for : ", clean)
 
-            if ',' == token or '}' == token or :
+            if ',' == token or '}' == token:
                 print("i am here bcs : ", token)
                 return res
             for delim in (",", "}"):
