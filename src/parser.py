@@ -3,10 +3,10 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator
 
 
-class ParameterSchema(BaseModel):
+class ParametersType(BaseModel):
     """Schema for a single function parameter."""
 
-    type: Literal["string", "number", "boolean"]
+    type: Literal["string", "number", "integer"]
 
 
 class FunctionDefinition(BaseModel):
@@ -14,7 +14,7 @@ class FunctionDefinition(BaseModel):
 
     name: str = Field(..., min_length=1)
     description: str
-    parameters: dict[str, ParameterSchema]
+    parameters: dict[str, ParametersType]
     returns: dict[str, Any]
 
 

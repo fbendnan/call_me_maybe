@@ -90,7 +90,15 @@ class LLMGenerator:
             logits = model.get_logits_from_input_ids(self.ids)
             next_id = int(np.argmax(logits))
             token = model.decode([next_id])
+            print(token)
             if '"' in token:
+                if token == '"':
+                    self.output.append(token)
+                    break
+                elif token.endswith(','):
+                    clear = token.strip(',')
+                    self.output.append(clear)
+                    break
                 self._force_tokens('"')
                 break
             self.output.append(token)
@@ -100,23 +108,28 @@ class LLMGenerator:
     def _generate_number_value(self):
         """Generate a JSON number using constrained decoding."""
         res = ""
+        allowed = '0123456789-+'
         for _ in range(20):
             logits = model.get_logits_from_input_ids(self.ids)
             next_id = int(np.argmax(logits))
             token = model.decode([next_id])
+            # print(token)
+            if token not in allowed and token.endswith('}'):
+                return res
             clean = token.strip()
+            # print("token = ", repr(token))
+            # print("clean = ", repr(clean))
             # if clean.endswith('}') and clean == "}":
             #     continue
-            print("outside for : ", clean)
+            # print("outside for : ", clean)
 
-            if ',' == token or '}' == token:
-                print("i am here bcs : ", token)
+            if token in (",", "}"):
+                self.ids.append(next_id)
                 return res
             for delim in (",", "}"):
                 if delim in clean:
-                    # self.ids.append(next_id)
                     res += clean.split(delim)[0]
-                    print("inside for : ", res)
+                    self.ids.append(next_id)
                     return res
             # self.output.append(token)
             res += token 
@@ -124,11 +137,20 @@ class LLMGenerator:
 
     def _generate_value(self, value_type):
         """Generate a value based on type."""
+        #n7awel kolchi sghir wla kbir
         if value_type == "string":
             self._generate_string_value()
         elif value_type == "number":
             res = self._generate_number_value()
+            # print("res = ", repr(res))
             self.output += str(float(res))
+            # print("output = ", self.output)
+        elif value_type == "integer":
+            res = self._generate_number_value()
+            # print("res = ", repr(res))
+            self.output += str(int(res))
+            # print("output = ", self.output)
+
 
     def _generate_parameters(self):
         """Generate parameters object."""

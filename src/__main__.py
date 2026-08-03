@@ -3,6 +3,7 @@ import json
 import sys
 import os
 from src.generator import LLMGenerator
+from src.parser import FunctionDefinition, InputPrompt
 
 def main():
     parser = argparse.ArgumentParser(description="Function calling with constrained decoding.")
@@ -16,9 +17,9 @@ def main():
 
     try:
         with open(args.functions_definition, 'r') as f:
-            functions = json.load(f)
+            functions: FunctionDefinition = json.load(f)
         with open(args.input, 'r') as f:
-            prompts = json.load(f)
+            prompts: InputPrompt = json.load(f)
     except Exception as e:
         print(f"Error reading input files: {e}", file=sys.stderr)
         sys.exit(1)
