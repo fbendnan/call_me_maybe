@@ -99,14 +99,27 @@ class LLMGenerator:
 
     def _generate_number_value(self):
         """Generate a JSON number using constrained decoding."""
-
+        res = ""
         for _ in range(20):
             logits = model.get_logits_from_input_ids(self.ids)
             next_id = int(np.argmax(logits))
             token = model.decode([next_id])
-            if ',' in token or '}' in token:
-                break
-            self.output.append(token)
+            clean = token.strip()
+            # if clean.endswith('}') and clean == "}":
+            #     continue
+            print("outside for : ", clean)
+
+            if ',' == token or '}' == token or :
+                print("i am here bcs : ", token)
+                return res
+            for delim in (",", "}"):
+                if delim in clean:
+                    # self.ids.append(next_id)
+                    res += clean.split(delim)[0]
+                    print("inside for : ", res)
+                    return res
+            # self.output.append(token)
+            res += token 
             self.ids.append(next_id)
 
     def _generate_value(self, value_type):
@@ -114,7 +127,8 @@ class LLMGenerator:
         if value_type == "string":
             self._generate_string_value()
         elif value_type == "number":
-            self._generate_number_value()
+            res = self._generate_number_value()
+            self.output += str(float(res))
 
     def _generate_parameters(self):
         """Generate parameters object."""
