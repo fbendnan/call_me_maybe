@@ -93,6 +93,7 @@ class LLMGenerator:
             logits = model.get_logits_from_input_ids(self.ids)
             next_id = int(np.argmax(logits))
             token = model.decode([next_id])
+            print(token)
             if '"' in token:
                 if token.endswith('\\"'):
                     self.output.append(token)
