@@ -20,14 +20,17 @@ def main():
             functions: FunctionDefinition = json.load(f)
         with open(args.input, 'r') as f:
             prompts: InputPrompt = json.load(f)
+        for f in functions:
+            _ = FunctionDefinition.model_validate(f)
     except Exception as e:
         print(f"Error reading input files: {e}", file=sys.stderr)
         sys.exit(1)
-
+    
     results = []
     generator = LLMGenerator(functions)
     for item in prompts: 
         try:
+            _ = InputPrompt.model_validate(item)
             user_prompt = item["prompt"]
             if user_prompt == "":
                 raise ValueError('No prompt founded')
