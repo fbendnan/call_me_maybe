@@ -15,9 +15,16 @@ def main():
                         help='Path to output JSON file')
     args = parser.parse_args()
 
+    unknowen_fun = {
+        "name": "No function available for that prompt",
+        "description": "Select this function only if no available function matches the user's prompt after considering all provided function definitions.",
+        "parameters": {},
+        "returns": {}
+    }
     try:
         with open(args.functions_definition, 'r') as f:
             functions: FunctionDefinition = json.load(f)
+            functions.append(unknowen_fun)
         with open(args.input, 'r') as f:
             prompts: InputPrompt = json.load(f)
         for f in functions:
@@ -28,7 +35,8 @@ def main():
     
     results = []
     generator = LLMGenerator(functions)
-    for item in prompts: 
+    for i, item in enumerate(prompts):
+        user_prompt = ""
         try:
             _ = InputPrompt.model_validate(item)
             user_prompt = item["prompt"]
@@ -36,6 +44,7 @@ def main():
                 raise ValueError('No prompt founded')
             result = generator.generate(user_prompt)
             results.append(result)
+            print(f"Generated {i + 1} : ", result)
         except Exception as e:
             print(f"Error generating for prompt '{user_prompt}': {e}", file=sys.stderr)
             results.append({

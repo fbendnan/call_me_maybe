@@ -10,11 +10,10 @@ class LLMGenerator:
         self.output = []
         self.ids = None
         self.step = 0
-        
+        self.do_comma = 1
         self.func_names = [f['name'] for f in functions]
         self.func_tokens = {name: get_tokens(name) for name in self.func_names}
         self.func_map = {f['name']: f for f in functions}
-        
         self.comma_id = SPECIAL_IDS['comma']
         self.brace_close_id = SPECIAL_IDS['brace_close']
         self.quote_id = SPECIAL_IDS['quote']
@@ -61,10 +60,10 @@ class LLMGenerator:
                     remaining.append(idx)
             
             possible = remaining
-            
             if len(possible) == 1:
                 chosen = self.func_names[possible[0]]
                 full = self.func_tokens[chosen]
+                
                 for tid in full[len(generated):]:
                     self.ids.append(tid)
                     self.output.append(model.decode([tid]))
@@ -92,12 +91,22 @@ class LLMGenerator:
             token = model.decode([next_id])
             print(token)
             if '"' in token:
-                if token == '"':
+                if token.endswith('\\"'):
                     self.output.append(token)
+                    self.ids.append(next_id)
+                    continue
+                elif token == '"':
+                    self.output.append(token)
+                    self.ids.append(next_id)
+                    break
+                elif token.endswith('"') and len(token) != 1:
+                    self.output.append(token)
+                    self.ids.append(next_id)
                     break
                 elif token.endswith(','):
-                    clear = token.strip(',')
-                    self.output.append(clear)
+                    self.do_comma = 0
+                    self.output.append(token)
+                    self.ids.append(next_id)
                     break
                 self._force_tokens('"')
                 break
@@ -108,21 +117,11 @@ class LLMGenerator:
     def _generate_number_value(self):
         """Generate a JSON number using constrained decoding."""
         res = ""
-        allowed = '0123456789-+'
         for _ in range(20):
             logits = model.get_logits_from_input_ids(self.ids)
             next_id = int(np.argmax(logits))
             token = model.decode([next_id])
-            # print(token)
-            if token not in allowed and token.endswith('}'):
-                return res
             clean = token.strip()
-            # print("token = ", repr(token))
-            # print("clean = ", repr(clean))
-            # if clean.endswith('}') and clean == "}":
-            #     continue
-            # print("outside for : ", clean)
-
             if token in (",", "}"):
                 self.ids.append(next_id)
                 return res
@@ -131,25 +130,19 @@ class LLMGenerator:
                     res += clean.split(delim)[0]
                     self.ids.append(next_id)
                     return res
-            # self.output.append(token)
             res += token 
             self.ids.append(next_id)
 
     def _generate_value(self, value_type):
         """Generate a value based on type."""
-        #n7awel kolchi sghir wla kbir
-        if value_type == "string":
+        if value_type.lower() == "string":
             self._generate_string_value()
-        elif value_type == "number":
+        elif value_type.lower() == "number":
             res = self._generate_number_value()
-            # print("res = ", repr(res))
             self.output += str(float(res))
-            # print("output = ", self.output)
-        elif value_type == "integer":
+        elif value_type.lower() == "integer":
             res = self._generate_number_value()
-            # print("res = ", repr(res))
             self.output += str(int(res))
-            # print("output = ", self.output)
 
 
     def _generate_parameters(self):
@@ -166,7 +159,9 @@ class LLMGenerator:
             param_type = params[pname].get('type', 'string')
             self._generate_value(param_type)
             if idx < len(param_names) - 1:
-                self._force_tokens(', ')
+                if self.do_comma:
+                    self._force_tokens(', ')
+                self.do_comma = 1
         
         self._force_tokens('}')
 
