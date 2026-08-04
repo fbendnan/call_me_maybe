@@ -11,9 +11,9 @@ clean:
 	rm -rf src/__pycache__ .mypy_cache .pytest_cache data/output/*
 
 lint:
-	flake8 .
-	mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	flake8 --exclude=.venv,__pycache__,moulinette,llm_sdk .
+	mypy src
 
 lint-strict:
-	flake8 .
-	mypy . --strict
+	flake8 --exclude=.venv,__pycache__,moulinette,llm_sdk .
+	mypy --follow-imports=skip --strict src

@@ -6,7 +6,7 @@ from src.generator import LLMGenerator
 from src.parser import FunctionDefinition, InputPrompt
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Function calling with constrained decoding.")
     parser.add_argument('--functions_definition',
@@ -31,10 +31,10 @@ def main():
 
     try:
         with open(args.functions_definition, 'r') as f:
-            functions: FunctionDefinition = json.load(f)
+            functions = json.load(f)
             functions.append(unknowen_fun)
         with open(args.input, 'r') as f:
-            prompts: InputPrompt = json.load(f)
+            prompts = json.load(f)
         for f in functions:
             _ = FunctionDefinition.model_validate(f)
     except Exception as e:

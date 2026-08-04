@@ -1,22 +1,25 @@
 import json
 import numpy as np
 from src.cache import get_tokens, model
+from src.parser import FunctionDefinition
+from typing import Any, Dict, List
 
 
 class LLMGenerator:
-    def __init__(self, functions, max_tokens=150):
+    def __init__(self, functions: list[FunctionDefinition],
+                 max_tokens: int = 150) -> None:
         self.functions = functions
         self.max_tokens = max_tokens
-        self.chosen_fun = None
-        self.output = []
-        self.ids = None
+        self.chosen_fun: FunctionDefinition | None = None
+        self.output: Any = []
+        self.ids: list[int] = []
         self.step = 0
         self.do_comma = 1
         self.func_names = [f['name'] for f in functions]
         self.func_tokens = {name: get_tokens(name) for name in self.func_names}
         self.func_map = {f['name']: f for f in functions}
 
-    def _generate_token(self, allowed_tokens):
+    def _generate_token(self, allowed_tokens: Any) -> Any:
         """Generate one token from the allowed set."""
         self.step += 1
         if self.step > self.max_tokens:
@@ -39,19 +42,19 @@ class LLMGenerator:
         self.ids.append(best_id)
         return token, best_id
 
-    def _force_tokens(self, text):
+    def _force_tokens(self, text: str) -> None:
         """Force a sequence of tokens."""
         for tid in get_tokens(text):
             self.ids.append(tid)
             self.output.append(model.decode([tid]))
 
-    def _generate_function_name(self):
+    def _generate_function_name(self) -> None:
         """Generate function name using prefix matching."""
-        generated = []
-        possible = list(range(len(self.func_names)))
+        generated: List[int] = []
+        possible: List[int] = list(range(len(self.func_names)))
 
         while True:
-            remaining = []
+            remaining: List[int] = []
             for idx in possible:
                 tokens = self.func_tokens[self.func_names[idx]]
                 if len(tokens) >= len(generated) and \
@@ -67,7 +70,6 @@ class LLMGenerator:
                     self.ids.append(tid)
                     self.output.append(model.decode([tid]))
                 self.chosen_fun = self.func_map[chosen]
-                return chosen
 
             next_tokens = set()
             for idx in possible:
@@ -81,7 +83,7 @@ class LLMGenerator:
             _, tid = self._generate_token(next_tokens)
             generated.append(tid)
 
-    def _generate_string_value(self):
+    def _generate_string_value(self) -> None:
 
         self._force_tokens('"')
         for _ in range(50):
@@ -112,7 +114,7 @@ class LLMGenerator:
             self.output.append(token)
             self.ids.append(next_id)
 
-    def _generate_number_value(self):
+    def _generate_number_value(self) -> str:
         """Generate a JSON number using constrained decoding."""
         res = ""
         for _ in range(20):
@@ -126,8 +128,9 @@ class LLMGenerator:
                     return res
             res += token
             self.ids.append(next_id)
+        return ""
 
-    def _generate_value(self, value_type):
+    def _generate_value(self, value_type: str) -> None:
         """Generate a value based on type."""
         if value_type.lower() == "string":
             self._generate_string_value()
@@ -138,18 +141,18 @@ class LLMGenerator:
             res = self._generate_number_value()
             self.output += str(int(res))
 
-    def _generate_parameters(self):
+    def _generate_parameters(self) -> None:
         """Generate parameters object."""
         if self.chosen_fun is None:
             raise RuntimeError("No function chosen")
 
         self._force_tokens('{')
-        params = self.chosen_fun['parameters']
+        params = self.chosen_fun.parameters
         param_names = list(params.keys())
 
         for idx, pname in enumerate(param_names):
             self._force_tokens(f'"{pname}": ')
-            param_type = params[pname].get('type', 'string')
+            param_type = params[pname].type
             self._generate_value(param_type)
             if idx < len(param_names) - 1:
                 if self.do_comma:
@@ -158,7 +161,7 @@ class LLMGenerator:
 
         self._force_tokens('}')
 
-    def generate(self, user_prompt):
+    def generate(self, user_prompt: str) -> Dict[Any, Any]:
         """Generate full JSON response."""
         self.output = []
         self.chosen_fun = None
