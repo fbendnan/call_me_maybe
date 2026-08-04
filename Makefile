@@ -2,18 +2,18 @@ install:
 	uv sync
 
 run:
-	uv run python3 -m src
+	uv run python -m src
 
 debug:
 	uv run python -m pdb -m src
 
 clean:
-	rm -rf src/__pycache__ .mypy_cache .pytest_cache data/output/*
+	rm -rf src/__pycache__ data/output .mypy_cache
 
 lint:
-	flake8 --exclude=.venv,__pycache__,moulinette,llm_sdk .
-	mypy src
+	uv run flake8 src 
+	uv run python -m mypy src
 
 lint-strict:
-	flake8 --exclude=.venv,__pycache__,moulinette,llm_sdk .
-	mypy --follow-imports=skip --strict src
+	uv run flake8 src
+	uv run python -m mypy --strict src

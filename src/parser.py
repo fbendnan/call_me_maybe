@@ -19,7 +19,6 @@ class FunctionDefinition(BaseModel):
 
 class InputPrompt(BaseModel):
     """Validated prompt item from function_calling_tests.json."""
-
     prompt: str
 
     @field_validator("prompt")
