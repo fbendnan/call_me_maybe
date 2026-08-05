@@ -30,15 +30,15 @@ class Small_LLM_Model:
 
     def __init__(
         self,
-        # model_name: str = "Qwen/Qwen3-1.7B",
         model_name: str = "Qwen/Qwen3-0.6B",
+        # model_name: str = "Qwen/Qwen2-0.5B",
         *,
         device: str | None = None,
         dtype: torch.dtype | None = None,
         trust_remote_code: bool = True,
     ) -> None:
         self._model_name = model_name
-        self._past_key_values = None
+
         # Auto-select device with priority: mps > cuda > cpu
         if device is None:
             if torch.backends.mps.is_available():
@@ -87,24 +87,14 @@ class Small_LLM_Model:
             ids = ids.tolist()
         return self._tokenizer.decode(ids, skip_special_tokens=True)
 
-    def reset_cache(self):
-        self._past_key_values = None
 
     def get_logits_from_input_ids(self, input_ids: list[int]) -> list[float]:
         """
         Given a list of input token ids, return the raw logits (no softmax) for the next token.
         """
-        if self._past_key_values is None:
-            ids = input_ids           # Full prompt
-        else:
-            ids = [input_ids[-1]]     # Only the newest token
-        input_tensor = torch.tensor([ids], device=self._device, dtype=torch.long)
-        
+        input_tensor = torch.tensor([input_ids], device=self._device, dtype=torch.long)
         with torch.no_grad():
-            out = self._model(input_ids=input_tensor,
-            use_cache=True,
-            past_key_values=self._past_key_values,)
-        self._past_key_values = out.past_key_values
+            out = self._model(input_ids=input_tensor)
         # Get logits for the last token in the sequence for the batch (batch size 1)
         logits = out.logits[0, -1].tolist()
         return [float(x) for x in logits]

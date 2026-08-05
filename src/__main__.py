@@ -2,6 +2,7 @@ import argparse
 import json
 import sys
 import os
+from src.cache import model
 from src.generator import LLMGenerator
 from src.parser import FunctionDefinition, InputPrompt
 

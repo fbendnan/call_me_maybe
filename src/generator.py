@@ -27,21 +27,11 @@ class LLMGenerator:
         self.step += 1
         if self.step > self.max_tokens:
             raise RuntimeError("Max tokens exceeded")
-
         logits = np.array(model.get_logits_from_input_ids(self.ids))
-        # print(type(logits))
         best_id: int | None = None
-        # best_score = float("-inf")
         allowed_ids = np.array(list(allowed_token_ids), dtype=np.int32)
-        # allowed = [a for a in allowed if a < len(logits)]
         best_index = int(np.argmax(logits[allowed_ids]))
-        
         best_id = allowed_ids[best_index]
-
-        # for tok in allowed_tokens:
-        #     if tok < len(logits) and logits[tok] > best_score:
-        #         best_score = logits[tok]
-        #         best_id = tok
         if best_id is None:
             raise RuntimeError("No valid token found")
 
@@ -53,8 +43,6 @@ class LLMGenerator:
     def _force_tokens(self, text: str) -> None:
         """Force a sequence of tokens"""
         tokens_ids = get_tokens_id(text)
-        # print(type(tokens))
-        # print(tokens)
         self.ids.extend(tokens_ids)
         self.output.extend(model.decode(tokens_ids))
 
@@ -62,7 +50,6 @@ class LLMGenerator:
         """Generate function name using prefix matching"""
         generated: List[int] = []
         possible: List[int] = list(range(len(self.func_names)))
-
         while True:
             remaining: List[int] = []
             for idx in possible:
@@ -77,19 +64,17 @@ class LLMGenerator:
             if len(possible) == 1:
                 chosen = self.func_names[possible[0]]
                 full = self.func_tokens_id[chosen]
-
-                for tid in full[len(generated):]:
-                    self.ids.append(tid)
-                    self.output.append(model.decode([tid]))
+                remaining = full[len(generated):]
+                
+                self.ids.extend(remaining)
+                self.output.append(model.decode(remaining))
                 self.chosen_fun = self.func_map[chosen]
                 return chosen
-
             next_tokens = set()
             for idx in possible:
                 tokens = self.func_tokens_id[self.func_names[idx]]
                 if len(tokens) > len(generated):
                     next_tokens.add(tokens[len(generated)])
-
             if not next_tokens:
                 raise RuntimeError("No valid next token")
 
@@ -103,6 +88,7 @@ class LLMGenerator:
             logits = model.get_logits_from_input_ids(self.ids)
             next_id = int(np.argmax(logits))
             token = model.decode([next_id])
+            # print(token)
             if '"' in token:
                 if token.endswith('\\"'):
                     self.output.append(token)
@@ -136,18 +122,21 @@ class LLMGenerator:
             logits = model.get_logits_from_input_ids(self.ids)
             next_id = int(np.argmax(logits))
             token = model.decode([next_id])
-            if token in (",", "}", "}}"):
+            if any(d in token for d in (",", "}", "}}")):
                 return res
-            for delim in (",", "}"):
-                if delim in token:
-                    return res
+            # if token in (",", "}", "}}"):
+            #     return res
+            # for delim in (",", "}"):
+            #     if delim in token:
+            #         return res
             res += token
             self.ids.append(next_id)
-        return ""
+        return res
 
     def _generate_value(self, value_type: str) -> None:
         """Generate a value parameter based on type"""
         if value_type.lower() == "string":
+            # print("param_names")
             self._generate_string_value()
         elif value_type.lower() == "number":
             res = self._generate_number_value()
@@ -164,7 +153,6 @@ class LLMGenerator:
         self._force_tokens("{")
         params = self.chosen_fun["parameters"]
         param_names = list(params.keys())
-
         for idx, pname in enumerate(param_names):
             if self.do_quote:
                 self._force_tokens(f'"{pname}": ')
@@ -203,7 +191,6 @@ class LLMGenerator:
         self._generate_parameters()
         self._force_tokens("}")
         final_out = "".join(self.output)
-        model.reset_cache()
         try:
             result = json.loads(final_out)
             return {
