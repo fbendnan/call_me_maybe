@@ -118,10 +118,11 @@ class LLMGenerator:
     def _generate_number_value(self) -> str:
         """Generate a Number parameter using constrained decoding"""
         res = ""
-        for _ in range(20):
+        for _ in range(100):
             logits = model.get_logits_from_input_ids(self.ids)
             next_id = int(np.argmax(logits))
             token = model.decode([next_id])
+            print(token)
             if any(d in token for d in (",", "}", "}}")):
                 return res
             # if token in (",", "}", "}}"):
