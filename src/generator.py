@@ -16,37 +16,47 @@ class LLMGenerator:
         self.ids: list[int] = []
         self.step = 0
         self.do_comma = 1
+        self.do_quote = 1
         self.func_names = [f["name"] for f in functions]
         self.func_tokens_id = {
             name: get_tokens_id(name) for name in self.func_names}
         self.func_map = {f["name"]: f for f in functions}
 
-    def _generate_token_id(self, allowed_tokens: Any) -> int:
+    def _generate_token_id(self, allowed_token_ids: Any) -> int:
         """Generate one token from the allowed set"""
         self.step += 1
         if self.step > self.max_tokens:
             raise RuntimeError("Max tokens exceeded")
 
-        logits = model.get_logits_from_input_ids(self.ids)
+        logits = np.array(model.get_logits_from_input_ids(self.ids))
+        # print(type(logits))
         best_id: int | None = None
-        best_score = float("-inf")
-        for tok in allowed_tokens:
-            if tok < len(logits) and logits[tok] > best_score:
-                best_score = logits[tok]
-                best_id = tok
+        # best_score = float("-inf")
+        allowed_ids = np.array(list(allowed_token_ids), dtype=np.int32)
+        # allowed = [a for a in allowed if a < len(logits)]
+        best_index = int(np.argmax(logits[allowed_ids]))
+        
+        best_id = allowed_ids[best_index]
+
+        # for tok in allowed_tokens:
+        #     if tok < len(logits) and logits[tok] > best_score:
+        #         best_score = logits[tok]
+        #         best_id = tok
         if best_id is None:
             raise RuntimeError("No valid token found")
 
         token = model.decode([best_id])
         self.output.append(token)
-        self.ids.append(best_id)
+        self.ids.append(int(best_id))
         return best_id
 
     def _force_tokens(self, text: str) -> None:
         """Force a sequence of tokens"""
-        for tid in get_tokens_id(text):
-            self.ids.append(tid)
-            self.output.append(model.decode([tid]))
+        tokens_ids = get_tokens_id(text)
+        # print(type(tokens))
+        # print(tokens)
+        self.ids.extend(tokens_ids)
+        self.output.extend(model.decode(tokens_ids))
 
     def _generate_function_name(self) -> None:
         """Generate function name using prefix matching"""
@@ -93,7 +103,6 @@ class LLMGenerator:
             logits = model.get_logits_from_input_ids(self.ids)
             next_id = int(np.argmax(logits))
             token = model.decode([next_id])
-            print(token)
             if '"' in token:
                 if token.endswith('\\"'):
                     self.output.append(token)
@@ -104,6 +113,9 @@ class LLMGenerator:
                     self.ids.append(next_id)
                     break
                 elif token.endswith('"') and len(token) != 1:
+                    if token == '","':
+                        self.do_quote = 0
+                        self.do_comma = 0
                     self.output.append(token)
                     self.ids.append(next_id)
                     break
@@ -154,7 +166,11 @@ class LLMGenerator:
         param_names = list(params.keys())
 
         for idx, pname in enumerate(param_names):
-            self._force_tokens(f'"{pname}": ')
+            if self.do_quote:
+                self._force_tokens(f'"{pname}": ')
+            else:
+                self._force_tokens(f'{pname}": ')
+                self.do_quote = 1
             param_type = params[pname]["type"]
             self._generate_value(param_type)
             if idx < len(param_names) - 1:
@@ -187,6 +203,7 @@ class LLMGenerator:
         self._generate_parameters()
         self._force_tokens("}")
         final_out = "".join(self.output)
+        model.reset_cache()
         try:
             result = json.loads(final_out)
             return {

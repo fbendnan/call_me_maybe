@@ -1,0 +1,132 @@
+[
+  {
+    "prompt": "What is the product of 3 and 5?"
+  },
+  {
+    "prompt": "What is the product of 12 and 4?"
+  },
+  {
+    "prompt": "Is 4 an even number?"
+  },
+  {
+    "prompt": "Is 7 an even number?"
+  },
+  {
+    "prompt": "Calculate compound interest on 1234567.89 at 0.0375 rate for 23 years"
+  },
+  {
+    "prompt": "Execute SQL query 'SELECT * FROM users' on the production database"
+  },
+  {
+    "prompt": "Run the query 'INSERT INTO logs VALUES (1, 2, 3)' on the system database"
+  },
+  {
+    "prompt": "Read the file at /home/user/data.json with utf-8 encoding"
+  },
+  {
+    "prompt": "Read C:\\Users\\john\\config.ini with latin-1 encoding"
+  },
+  {
+    "prompt": "Format template: Hello {user}'s profile!"
+  },
+  {
+    "prompt": "Format template: Say \"hello\" to {name}"
+  },
+  {
+    "prompt": "What is the sum of 2 and 3?"
+  },
+  {
+    "prompt": "What is the sum of 265 and 345?"
+  },
+  {
+    "prompt": "Greet shrek"
+  },
+  {
+    "prompt": "Greet john"
+  },
+  {
+    "prompt": "Reverse the string 'hello'"
+  },
+  {
+    "prompt": "Reverse the string 'world'"
+  },
+  {
+    "prompt": "What is the square root of 16?"
+  },
+  {
+    "prompt": "Calculate the square root of 144"
+  },
+  {
+    "prompt": "Replace all numbers in \"Hello 34 I'm 233 years old\" with NUMBERS"
+  },
+  {
+    "prompt": "Replace all vowels in 'Programming is fun' with asterisks"
+  },
+  {
+    "prompt": "Substitute the word 'cat' with 'dog' in 'The cat sat on the mat with another cat'"
+  },
+  {
+    "prompt": "Replace every occurrence of 'hello' with 'hi' in 'hello world hello'"
+  },
+  {
+    "prompt": "Find and replace 'old' with 'new' in 'old code old style'"
+  },
+  {
+    "prompt": "In 'Python is great', change 'Python' to 'Java'"
+  },
+  {
+    "prompt": "Delete all numbers from 'I have 3 cats and 2 dogs'"
+  },
+  {
+    "prompt": "Remove all punctuation from 'Hello, World!'"
+  },
+  {
+    "prompt": "What is the sum of 2 and 3?"},
+  {
+    "prompt": "What is the sum of 265 and 345?"
+  },
+  {"prompt": "Add 10 and 20"},
+  {"prompt": "Calculate 50 plus 50"},
+  {"prompt": "What is 7 + 8?"},
+  {"prompt": "Sum of 1000 and 2000"},
+  {"prompt": "What is 3.5 plus 1.5?"},
+  {"prompt": "Add -5 and 10"},
+  {"prompt": "Compute 999 + 1"},
+  {"prompt": "What is 0 plus 0?"},
+  {"prompt": "Greet shrek"},
+  {"prompt": "Greet john"},
+  {"prompt": "Greet Alice"},
+  {"prompt": "Greet Bob"},
+  {"prompt": "Greet Maria"},
+  {"prompt": "Say hello to Charlie"},
+  {"prompt": "Greet David"},
+  {"prompt": "Greet Emma"},
+  {"prompt": "Reverse the string 'hello'"},
+  {"prompt": "Reverse the string 'world'"},
+  {"prompt": "Reverse the string 'abcdef'"},
+  {"prompt": "Reverse the string '12345'"},
+  {"prompt": "Reverse 'racecar'"},
+  {"prompt": "What is the square root of 16?"},
+  {"prompt": "Calculate the square root of 144"},
+  {"prompt": "Find the square root of 25"},
+  {"prompt": "What is sqrt of 9?"},
+  {"prompt": "Square root of 100"},
+  {"prompt": "What is the square root of 49?"},
+  {"prompt": "Substitute the word 'cat' with 'dog' in 'The cat sat on the mat with another cat'"},
+  {"prompt": "Replace the word 'hello' with 'hi' in 'hello world hello'"},
+  {"prompt": "Find and replace 'foo' with 'bar' in 'foo bar foo baz'"},
+  {"prompt": "In 'hello world', change 'world' to 'earth'"},
+  {"prompt": "Replace 'hi' with 'hello' in the string 'hi there hi'"},
+  {"prompt": "Replace all numbers in \"Hello 34 I'm 233 years old\" with NUMBERS"},
+  {"prompt": "Replace all vowels in 'Programming is fun' with asterisks"},
+  {"prompt": "Replace all digits in '123 abc 456' with X"},
+  {"prompt": "Remove all spaces from 'hello world foo'"},
+  {"prompt": "Replace all uppercase letters in 'Hello World' with x"},
+  {"prompt": "Replace all lowercase letters in 'Hello World' with y"},
+  {"prompt": "Remove all punctuation from 'Hello, World!'"},
+  {"prompt": "Replace all consonants in 'Programming' with *"},
+  {"prompt": "Replace all whitespace in 'hello world' with -"},
+  {"prompt": "Replace all capital letters in 'Hello World' with z"},
+  {"prompt": "Delete all numbers from 'I have 3 cats and 2 dogs'"},
+  {"prompt": "Replace all digits in 'abc123' with #"}
+]
