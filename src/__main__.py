@@ -46,7 +46,7 @@ def main() -> None:
     for i, item in enumerate(prompts):
         user_prompt = ""
         try:
-            print(f"\n============... start {i + 1} generation ...============")
+            print(f"\n========... start {i + 1} generation ...========")
             _ = InputPrompt.model_validate(item)
             user_prompt = item["prompt"]
             if user_prompt == "":

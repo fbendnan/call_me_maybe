@@ -63,8 +63,9 @@ class LLMGenerator:
 
             possible = remaining
 
-            exact_matches = [idx for idx in possible
-                    if self.func_tokens_id[self.func_names[idx]] == generated]
+            exact_matches = [
+                idx for idx in possible
+                if self.func_tokens_id[self.func_names[idx]] == generated]
 
             if len(possible) == 1:
                 chosen = self.func_names[possible[0]]
@@ -81,7 +82,7 @@ class LLMGenerator:
                     tokens = self.func_tokens_id[self.func_names[idx]]
                     if len(tokens) > len(generated):
                         continuation_token.add(tokens[len(generated)])
-                
+
                 logits = np.array(model.get_logits_from_input_ids(self.ids))
                 best_id = int(np.argmax(logits))
 
@@ -138,18 +139,22 @@ class LLMGenerator:
         """Generate a Number parameter using constrained decoding"""
         res = ""
         for i in range(100):
-            logits = np.array(model.get_logits_from_input_ids(self.ids))    
-            
+            logits = np.array(model.get_logits_from_input_ids(self.ids))
+
             if i == 0:
-                allowed = {" -", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ",", "}"}
+                allowed = {
+                    " -", "0", "1", "2", "3", "4", "5",
+                    "6", "7", "8", "9", ",", "}"}
             else:
-                allowed = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", ",", "}"}
-        
+                allowed = {
+                    "0", "1", "2", "3", "4", "5", "6",
+                    "7", "8", "9", ".", ",", "}"}
+
             allowed_ids = [get_tokens_id(ch)[0] for ch in allowed]
-        
+
             masked_logits = np.full_like(logits, -np.inf)
             masked_logits[allowed_ids] = logits[allowed_ids]
-        
+
             next_id = int(np.argmax(masked_logits))
             token = model.decode([next_id])
             if any(d in token for d in (",", "}", "}}")):
@@ -209,15 +214,18 @@ class LLMGenerator:
         self._force_tokens('{"prompt": ')
         self._force_tokens(json.dumps(user_prompt))
         print("\ngenerate prompt     :", "".join(self.output))
-        print("------------------------------------------------------------------------------------")
+        print("--------------------------------------------"
+              "----------------------------------------")
         self._force_tokens(',"name": "')
         self._generate_function_name()
         print("adding function name:", "".join(self.output))
-        print("------------------------------------------------------------------------------------")
+        print("--------------------------------------------"
+              "----------------------------------------")
         self._force_tokens('", "parameters": ')
         self._generate_parameters()
         print("adding parameters   :", "".join(self.output))
-        print("-----------------------------------------------------------------------------------------------")
+        print("---------------------------------------------------------------"
+              "--------------------------------")
         self._force_tokens("}")
         final_out = "".join(self.output)
         try:
