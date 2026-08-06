@@ -20,7 +20,7 @@ class LLMGenerator:
         self.func_names = [f["name"] for f in functions]
         self.func_tokens_id = {
             name: get_tokens_id(name) for name in self.func_names}
-        self.func_map = {f["name"]: f for f in functions}
+        self.func_dict = {f["name"]: f for f in functions}
 
     def _generate_token_id(self, allowed_token_ids: Any) -> int:
         """Generate one token from the allowed set"""
@@ -50,6 +50,7 @@ class LLMGenerator:
         """Generate function name using prefix matching"""
         generated: List[int] = []
         possible: List[int] = list(range(len(self.func_names)))
+
         while True:
             remaining: List[int] = []
             for idx in possible:
@@ -61,15 +62,34 @@ class LLMGenerator:
                     remaining.append(idx)
 
             possible = remaining
+
+            exact_matches = [idx for idx in possible
+                    if self.func_tokens_id[self.func_names[idx]] == generated]
+
             if len(possible) == 1:
                 chosen = self.func_names[possible[0]]
                 full = self.func_tokens_id[chosen]
                 remaining = full[len(generated):]
-                
                 self.ids.extend(remaining)
                 self.output.append(model.decode(remaining))
-                self.chosen_fun = self.func_map[chosen]
+                self.chosen_fun = self.func_dict[chosen]
                 return chosen
+
+            if exact_matches:
+                continuation_token = set()
+                for idx in possible:
+                    tokens = self.func_tokens_id[self.func_names[idx]]
+                    if len(tokens) > len(generated):
+                        continuation_token.add(tokens[len(generated)])
+                
+                logits = np.array(model.get_logits_from_input_ids(self.ids))
+                best_id = int(np.argmax(logits))
+
+                if best_id not in continuation_token:
+                    chosen = self.func_names[exact_matches[0]]
+                    self.chosen_fun = self.func_dict[chosen]
+                    return chosen
+
             next_tokens = set()
             for idx in possible:
                 tokens = self.func_tokens_id[self.func_names[idx]]
@@ -88,7 +108,6 @@ class LLMGenerator:
             logits = model.get_logits_from_input_ids(self.ids)
             next_id = int(np.argmax(logits))
             token = model.decode([next_id])
-            # print(token)
             if '"' in token:
                 if token.endswith('\\"'):
                     self.output.append(token)
@@ -118,18 +137,23 @@ class LLMGenerator:
     def _generate_number_value(self) -> str:
         """Generate a Number parameter using constrained decoding"""
         res = ""
-        for _ in range(100):
-            logits = model.get_logits_from_input_ids(self.ids)
-            next_id = int(np.argmax(logits))
+        for i in range(100):
+            logits = np.array(model.get_logits_from_input_ids(self.ids))    
+            
+            if i == 0:
+                allowed = {" -", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ",", "}"}
+            else:
+                allowed = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", ",", "}"}
+        
+            allowed_ids = [get_tokens_id(ch)[0] for ch in allowed]
+        
+            masked_logits = np.full_like(logits, -np.inf)
+            masked_logits[allowed_ids] = logits[allowed_ids]
+        
+            next_id = int(np.argmax(masked_logits))
             token = model.decode([next_id])
-            print(token)
             if any(d in token for d in (",", "}", "}}")):
                 return res
-            # if token in (",", "}", "}}"):
-            #     return res
-            # for delim in (",", "}"):
-            #     if delim in token:
-            #         return res
             res += token
             self.ids.append(next_id)
         return res
@@ -137,7 +161,6 @@ class LLMGenerator:
     def _generate_value(self, value_type: str) -> None:
         """Generate a value parameter based on type"""
         if value_type.lower() == "string":
-            # print("param_names")
             self._generate_string_value()
         elif value_type.lower() == "number":
             res = self._generate_number_value()
@@ -171,10 +194,6 @@ class LLMGenerator:
 
     def generate(self, user_prompt: str) -> Dict[Any, Any]:
         """Generate full JSON response"""
-        self.output = []
-        self.chosen_fun = None
-        self.step = 0
-
         prompt = (
             f"You are a function-calling assistant. "
             f"Given a user request, output a JSON object "
@@ -183,13 +202,22 @@ class LLMGenerator:
             f"User request: {user_prompt}\n\n"
             f"Output JSON:"
         )
+        self.output = []
+        self.chosen_fun = None
+        self.step = 0
         self.ids = model.encode(prompt).tolist()[0]
         self._force_tokens('{"prompt": ')
         self._force_tokens(json.dumps(user_prompt))
+        print("\ngenerate prompt     :", "".join(self.output))
+        print("------------------------------------------------------------------------------------")
         self._force_tokens(',"name": "')
         self._generate_function_name()
+        print("adding function name:", "".join(self.output))
+        print("------------------------------------------------------------------------------------")
         self._force_tokens('", "parameters": ')
         self._generate_parameters()
+        print("adding parameters   :", "".join(self.output))
+        print("-----------------------------------------------------------------------------------------------")
         self._force_tokens("}")
         final_out = "".join(self.output)
         try:

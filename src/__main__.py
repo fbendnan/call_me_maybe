@@ -2,7 +2,6 @@ import argparse
 import json
 import sys
 import os
-from src.cache import model
 from src.generator import LLMGenerator
 from src.parser import FunctionDefinition, InputPrompt
 
@@ -47,13 +46,14 @@ def main() -> None:
     for i, item in enumerate(prompts):
         user_prompt = ""
         try:
+            print(f"\n============... start {i + 1} generation ...============")
             _ = InputPrompt.model_validate(item)
             user_prompt = item["prompt"]
             if user_prompt == "":
                 raise ValueError('No prompt founded')
             result = generator.generate(user_prompt)
             results.append(result)
-            print(f"Generated {i + 1} : ", result)
+            print(f"==> [{i + 1}] Generated succesfully : ", result)
         except Exception as e:
             print(f"Error generating for prompt '{user_prompt}': {e}",
                   file=sys.stderr)
@@ -66,8 +66,7 @@ def main() -> None:
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     with open(args.output, 'w') as f:
         json.dump(results, f, indent=2)
-
-    print(f"Output written to {args.output}")
+    print(f"\n==============[Output written to {args.output}]==============")
 
 
 if __name__ == "__main__":
