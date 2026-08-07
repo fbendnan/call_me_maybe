@@ -32,11 +32,12 @@ def main() -> None:
     try:
         with open(args.functions_definition, 'r') as f:
             functions = json.load(f)
-            functions.append(unknowen_fun)
         with open(args.input, 'r') as f:
             prompts = json.load(f)
         for f in functions:
             _ = FunctionDefinition.model_validate(f)
+        functions.append(unknowen_fun)
+
     except Exception as e:
         print(f"Error reading input files: {e}", file=sys.stderr)
         sys.exit(1)

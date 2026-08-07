@@ -15,16 +15,19 @@
     }
   },
   {
-    "name": "fn_is_even",
-    "description": "Check if an integer is even, returns True if even, False if odd.",
-    "parameters": {
-      "n": {
-        "type": "integer"
-      }
-    },
-    "returns": {
+  "name": "fn_is_even",
+  "description": "Check if an integer is even.",
+  "parameters": {
+    "strict": {
       "type": "boolean"
+    },
+    "n": {
+      "type": "integer"
     }
+  },
+  "returns": {
+    "type": "boolean"
+  }
   },
   {
     "name": "fn_calculate_compound_interest",

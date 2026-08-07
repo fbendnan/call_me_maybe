@@ -125,6 +125,7 @@ class LLMGenerator:
                     self.output.append(token)
                     self.ids.append(next_id)
                     break
+
                 elif token.endswith(","):
                     self.do_comma = 0
                     self.output.append(token)
@@ -134,6 +135,18 @@ class LLMGenerator:
                 break
             self.output.append(token)
             self.ids.append(next_id)
+
+    def _generate_boolean_value(self):
+        """Generate true or false using constrained decoding."""
+        logits = model.get_logits_from_input_ids(self.ids)
+
+        true_id = get_tokens_id("true")[0]
+        false_id = get_tokens_id("false")[0]
+
+        chosen = true_id if logits[true_id] > logits[false_id] else false_id
+
+        self.ids.append(chosen)
+        self.output.append(model.decode([chosen]))
 
     def _generate_number_value(self) -> str:
         """Generate a Number parameter using constrained decoding"""
@@ -173,6 +186,9 @@ class LLMGenerator:
         elif value_type.lower() == "integer":
             res = self._generate_number_value()
             self.output += str(int(res))
+        elif value_type.lower() == "boolean":
+            res = self._generate_boolean_value()
+            # self.output += res
 
     def _generate_parameters(self) -> None:
         """Generate parameters object"""

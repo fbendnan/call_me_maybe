@@ -1,24 +1,31 @@
-from typing import Any, Literal
-from pydantic import BaseModel, Field, field_validator
+from typing import Literal
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 class ParametersType(BaseModel):
     """Schema for a single function parameter."""
+    model_config = ConfigDict(extra="forbid")
+    type: Literal["string", "number", "integer", "boolean"]
 
-    type: Literal["string", "number", "integer"]
+
+class ReturnsType(BaseModel):
+    """Schema for a function return."""
+    model_config = ConfigDict(extra="forbid")
+    type: Literal["string", "number", "integer", "boolean"]
 
 
 class FunctionDefinition(BaseModel):
     """Validated function definition from functions_definition.json."""
-
+    model_config = ConfigDict(extra="forbid")
     name: str = Field(..., min_length=1)
     description: str
     parameters: dict[str, ParametersType]
-    returns: dict[str, Any]
+    returns: ReturnsType
 
 
 class InputPrompt(BaseModel):
     """Validated prompt item from function_calling_tests.json."""
+    model_config = ConfigDict(extra="forbid")
     prompt: str
 
     @field_validator("prompt")
