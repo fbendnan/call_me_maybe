@@ -32,8 +32,16 @@ def main() -> None:
     try:
         with open(args.functions_definition, 'r') as f:
             functions = json.load(f)
+            if not isinstance(functions, list):
+                raise ValueError("Functions definition file must contain a JSON array.")
+            if not functions:
+                raise ValueError("Functions definition file cannot be empty.")
         with open(args.input, 'r') as f:
             prompts = json.load(f)
+            if not isinstance(prompts, list):
+                raise ValueError("Functions calling test file must contain a JSON array.")
+            if not prompts:
+                raise ValueError("Functions calling test file cannot be empty.")
         for f in functions:
             _ = FunctionDefinition.model_validate(f)
         functions.append(unknowen_fun)

@@ -18,9 +18,17 @@ class FunctionDefinition(BaseModel):
     """Validated function definition from functions_definition.json."""
     model_config = ConfigDict(extra="forbid")
     name: str = Field(..., min_length=1)
-    description: str
+    description: str = Field(..., min_length=5)
     parameters: dict[str, ParametersType]
     returns: ReturnsType
+
+    @field_validator("parameters")
+    @classmethod
+    def validate_param_names(cls, value: dict[str, ParametersType]):
+        for key in value:
+            if not key.strip():
+                raise ValueError("Parameter names cannot be empty.")
+        return value
 
 
 class InputPrompt(BaseModel):

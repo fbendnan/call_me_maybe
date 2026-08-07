@@ -136,7 +136,7 @@ class LLMGenerator:
             self.output.append(token)
             self.ids.append(next_id)
 
-    def _generate_boolean_value(self):
+    def _generate_boolean_value(self) -> None:
         """Generate true or false using constrained decoding."""
         logits = model.get_logits_from_input_ids(self.ids)
 
@@ -187,8 +187,7 @@ class LLMGenerator:
             res = self._generate_number_value()
             self.output += str(int(res))
         elif value_type.lower() == "boolean":
-            res = self._generate_boolean_value()
-            # self.output += res
+            self._generate_boolean_value()
 
     def _generate_parameters(self) -> None:
         """Generate parameters object"""
