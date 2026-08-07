@@ -46,7 +46,7 @@ def main() -> None:
             _ = FunctionDefinition.model_validate(f)
         functions.append(unknowen_fun)
 
-    except Exception as e:
+    except (KeyboardInterrupt, Exception) as e:
         print(f"Error reading input files: {e}", file=sys.stderr)
         sys.exit(1)
 
@@ -63,7 +63,7 @@ def main() -> None:
             result = generator.generate(user_prompt)
             results.append(result)
             print(f"==> [{i + 1}] Generated succesfully : ", result)
-        except Exception as e:
+        except (KeyboardInterrupt, Exception) as e:
             print(f"Error generating for prompt '{user_prompt}': {e}",
                   file=sys.stderr)
             results.append({
